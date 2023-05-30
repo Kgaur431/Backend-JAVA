@@ -1,4 +1,4 @@
-package com.kartik;
+package com.kartik.basics1;
 
 public class Main {
     public static void main(String[] args) {

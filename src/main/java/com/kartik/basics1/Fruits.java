@@ -1,6 +1,4 @@
-package com.kartik;
-
-import javax.swing.*;
+package com.kartik.basics1;
 
 public class Fruits {
     String color;
