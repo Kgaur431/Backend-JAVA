@@ -59,3 +59,26 @@
             - @Autowired
                     we annotate the TaskRepository variable with @Autowired 
                     so, spring will inject the TaskRepository object in TaskService class.
+
+End:-
+    First thing we create the TaskEntity. TaskEntity is used by ORM JPA Hibernate to understand how sql table should be created.
+        - ORM takes classes and convert them into tables. & it takes objects and convert them into rows.
+        - by defining TaskEntity we are defining that how our task would be saved in my db.
+        - I used Lombok to generate the getter and setter ... so on.
+    Second thing we create Data Layer 
+        - we create TaskRepository interface which extends JpaRepository interface. JPARepository has implementation of SimpleJpaRepository class.
+        - springboot has internal mechanism via which if we extends JPARespository & create our own repository interface then springboot will automatically map the implementation to simpleJpaRepository class.
+        - we will just as many Entities exists for every entity we will create the Repository for the Repository we will extend the JpaRepository & in the Generics we will add Entity Data type & its ID dat type.
+            & spring will take care rest of the things. & Annotated with @Repository
+        - Data Layer should only contain code about technical steps that we take to save the data in db.
+    Third thing we create Service Layer. 
+        - we create some methods in TaskService class. write function name which like correct in terms of English. 
+        - we just need to take required input 
+        - here we will take product descion that "In my Task Manager when user create new task then by default completed should be false" that is what i have descided.
+            so this is product descion. not a technical descion like "which db we should use" that is technical descion. so as user they dont care about technical descion.
+            user understand how the app behave.    
+        - if somebody read the service file then he should understand what is the business logic that's how we have to write the code.
+    Forth thing we create Controller Layer.
+        - Controller Layer should only contain code about technical steps that how we send the data to frontend. 
+            
+        

@@ -36,4 +36,7 @@ public class TaskEntity {
        so we need NoArgsConstructor & Setter instead of AllArgsConstructor.
        means, when we create a new task, we will create a task without id, we will set the other fields by using setter. becoz when we save in db then db will
          generate the id for us.
+
+   - here no-args constructor is useful because we create a task without id, we will create task obj then we will set the other fields by using setter. becoz when we save in db then db will
+         generate the id for us.
  */
