@@ -1,0 +1,16 @@
+server:
+  port: 8383
+
+spring:
+  datasource:
+    driver-class-name: org.h2.Driver # we set a driver for JPA which tells, "Which kind of db our repo is using."
+    url: jdbc:h2:mem:testdb # we set an url for JPA which tells, "Where is our db located." like we stored in memory. db would be created in RAM.
+    #url: jdbc:h2:file:./data/demo.db # we set an url for JPA, which tells, "Where is our db located." like we stored in file. & a path is relative to the project root.
+  jpa:
+    show-sql: true  # means, if sql queries happening then, they will get printed to log.
+    properties:
+      hibernate:
+        format_sql: true # means, if sql queries happening then, they will get printed to log in a formatted way.
+    hibernate:
+      ddl-auto: create # means everytime we start the app; it will create new tables || it will use existing tables if they are already created. mem db will always create new tables.
+

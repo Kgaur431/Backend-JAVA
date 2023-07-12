@@ -152,9 +152,99 @@ logic Segregation   that's where the logic Segregation comes into picture.
                 In future if we trace bug then based on req id we can trace that what user did becoz of which bug is generated. 
                     if we generate the req id from client level then it's very good so that we can trace it easily but if we generate
                     req id from API Gateway then we can also trace it.
-        
-        
-        
+   Add Dependencies in build.gradle :-
+                      if we want to use JPA then we have to add dependency in build.gradle
+                      like:-
+                        implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+   Application.properties:-
+                     - here we write certain configuration for our project. 
+                     - Prefered way to write configuration is in application.yaml file.
+                     - both properties & yml file are Markup Language. both are serve same thing. but syntax is different. 
+                       Example:- 
+                            Application.properties:- 
+                                server.port=8081
+                                server.address=localhost
+                                spring.datasource.url=jdbc:mysql://localhost:3306/task_manager
+                                spring.datasource.username=root
+                                spring.datasource.password=root
+                            
+                            Application.yaml:- here, server. in every line is not needed. files become more readable.
+                                server:
+                                    port: 8081
+                                    address: localhost
+                                spring:
+                                    datasource:
+                                        url: jdbc:mysql://localhost:3306/task_manager
+                                        username: root
+                                        password: root
+   Package by Layer || Feature :-
+                                Package by Layer means "Old Software does this"
+                                 - we create package by layer like controller, service, data.
+                                   Example:- 
+                                        com.example.taskmanager.controller
+                                        com.example.taskmanager.service
+                                        com.example.taskmanager.data
+                                Package by Feature means "Modern Software does this becoz it's easier to split things into services || microservices"
+                                 - we create package by feature like task, user, note.
+                                   Example:-
+                                         com.example.taskmanager.task
+                                             TaskController.java
+                                             TaskService.java
+                                             TaskRepository.java
+                                         com.example.taskmanager.user
+                                             UserController.java
+                                             UserService.java
+                                             UserRepository.java
+                                         com.example.taskmanager.note
+                                             NoteController.java
+                                             NoteService.java
+                                             NoteRepository.java
+   Lombok:- 
+            if we use annotation like @Getter, @NoArgsConstructor, @AllArgsConstructor, 
+            then we don't have to code for those things. lombok will generate code for us.
+            "At Compilation time it will generate these methods into my class"
+            becoz writing these things we called as boilerplate code.
+            Lombok is a Compile Time library that helps us to reduce boilerplate code.
+            also a Development tool.
+            
+            those annotation are Source level annotation. means, they are not available at runtime.
+   Approach:- to write code.        
+            Bottom to Top:- (if we know how we store data. hence Repository layer look like, hence service layer look like, hence controller layer look like)
+                    - first we write data layer then service layer then controller layer.
+                        
+            Top to Bottom:- We start from Requirements side. (like my api suppose to look, hence the logic i need to write, hence this is how i store data)
+                    - first we write controller layer then service layer then data layer.
+   Autowiring:- 
+               Means we don't have to create object of class. spring will create object for us.
+                How interanlly Happened ?
+                    - spring will create object of class & store it in container.
+                    - when we need that object then spring will give us that object from container.
+                    - spring will create object of class by calling default constructor.
+                    - if we want to create object of class by calling parameterized constructor then we have to use @Autowired annotation.
+                      autowired annotation will tell spring to create object of class by calling parameterized constructor.
+                        Example:-
+                                @Autowired
+                                public TaskController(TaskService taskService) {
+                                    this.taskService = taskService;
+                              }
+   Test:-
+              if we want to test the code that we have written in Service layer then we have to write Controller layer also.
+                so that we can make API call & test the code.
+              but if we don't want to write Controller layer then we can write Unit Test. 
+   JPATest V/s Web Test :-
+                JPA Test:-
+                            - JPATest will create a DB layer & test. 
+                            - JPA Test will not start the server.
+                            - JPA Test will not hit the API.
+                Web Test:-
+                            - Web Test will start the server. & test.
+                SpringBootTest:-
+                            - SpringBootTest will start the server. & test.
+                            - it will take more time to test.
+                            - it will test the whole application.
+                                    
+                        
+    
         
         
         
