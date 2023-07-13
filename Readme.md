@@ -9,16 +9,16 @@
                                 -----------------------|--------------------------------------|-------------------------------------
                                 |                      |                                      /  Task SQL Repository               |
           REST                  |                      |                                    / |                                    |
-                                |   Task Controlle \   |                                  /   |                                    |
+                                |   Task Controller\   |                                  /   |                                    |
                                 |                   \  |                                /     |                                    |
                                 |                    \ |                              /       |                                    |
                                 |                     \                             /         |                                    |
           GraphQL               |  Task GraphQL Cont.---           Task   Service./           |                                    |
-                                |                      /                           \           |                                   |
-                                |                     /                              \         |                                   |
-                                |                    / |                               \       |                                   |
-                                |                   /  |                                 \     |                                   |
-                                |                  /   |                                   \   |                                   |
+                                |                      /                           \          |                                   |
+                                |                     /                              \        |                                   |
+                                |                    / |                               \      |                                   |
+                                |                   /  |                                 \    |                                   |
+                                |                  /   |                                   \  |                                   |
           HTML                  |   Task HTML Cont/    |                                      \   Task Redis Repository            |
                                 -----------------------|--------------------------------------|-------------------------------------
                                 |    Controllers                 Services                               Repositories               |
@@ -120,12 +120,12 @@ logic Segregation   that's where the logic Segregation comes into picture.
                         all these layers among them they would technically API only.
                             but internally these are function 
                             assume Service Layer & Controller Layer have contract like Controller say this this thing i will ask you to do. 
-                            Service Layer say i will do this this & respond to you. \
+                            Service Layer say i will do this this & respond to you. 
                            means, while desgin Software we should not only desgin correct usecases. like what format service send data to controller. 
                                     but also we have to desgin incorrect usecases. like what format error would be read by controller from service layer.   
 
    API Gateway:-
-                 In Front of my Application there is an API Gateway, it will act as load balancer. 
+                 In Front of my Application (Backend Application) || Server there is an API Gateway, it will act as load balancer. 
                  like multiple requests coming from diff apps. assume if an api request comes that not contain api key then it will reject it before calling the app logic\
                       that is the job of API Gateway.
                  we can put this logic in our app also but if we have multiple backend like microservices then we have to write this logic in every service.
@@ -224,6 +224,8 @@ logic Segregation   that's where the logic Segregation comes into picture.
                       autowired annotation will tell spring to create object of class by calling parameterized constructor.
                         Example:-
                                 @Autowired
+                                private TaskService taskService;
+                                
                                 public TaskController(TaskService taskService) {
                                     this.taskService = taskService;
                               }
