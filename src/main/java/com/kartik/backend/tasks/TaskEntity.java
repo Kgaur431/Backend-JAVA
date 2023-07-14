@@ -21,9 +21,10 @@ public class TaskEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)  // we use SEQUENCE generator like 1, 2, 3 ... so on.
     private Long id;
-
+    @Column(nullable = false)  // this annotation is used to tell Spring that this field is a column in the database table. which is not null.
     private String title;
     private String description;
+    @Column(nullable = false)
     private Boolean completed;
     private Date dueDate;
     @OneToMany(cascade = CascadeType.ALL, targetEntity = NotesEntity.class, mappedBy = "task")

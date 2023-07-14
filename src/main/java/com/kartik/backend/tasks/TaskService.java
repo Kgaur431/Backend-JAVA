@@ -1,6 +1,9 @@
 package com.kartik.backend.tasks;
 
 import com.kartik.backend.beans.TestBean;
+import com.kartik.backend.tasks.dtos.CreateTaskDto;
+import com.kartik.backend.tasks.dtos.TaskResponseDto;
+import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
@@ -9,32 +12,36 @@ import java.util.Date;
 public class TaskService {
     private final TaskRepository taskRepository;
     TestBean testBean;
+    private final ModelMapper modelMapper;
 
+    public TaskService(TaskRepository taskRepository, ModelMapper modelMapper) {
+        this.taskRepository = taskRepository;
+        this.modelMapper = modelMapper;
+    }
+/*
     public TaskService(TaskRepository taskRepository) {
         this.taskRepository = taskRepository;
     }
-//     public TaskService(TaskRepository taskRepository, TestBean testBean) {
-//        this.taskRepository = taskRepository;
-//        this.testBean = testBean;
-//    }
-    public TaskEntity createTask(String title, String description, Date dueDate) {
-        TaskEntity task = new TaskEntity();
-        task.setTitle(title);
-        task.setDescription(description);
-        task.setDueDate(dueDate);
-        task.setCompleted(false);  // By default, a task is not completed.
+     public TaskService(TaskRepository taskRepository, TestBean testBean) {
+        this.taskRepository = taskRepository;
+        this.testBean = testBean;
+    }
 
-        return taskRepository.save(task);
+ */
+    public TaskResponseDto createTask(CreateTaskDto createTaskDto) {
+        TaskEntity task = modelMapper.map(createTaskDto, TaskEntity.class);
+        task.setCompleted(false);  // By default, a task is not completed.
+        TaskEntity tasks = taskRepository.save(task);
+        return modelMapper.map(tasks, TaskResponseDto.class);
     }
 
     public String getTestBeanName() {
         return testBean.getName();
     }
 
-
-
-
 }
+
+
 
 
 
