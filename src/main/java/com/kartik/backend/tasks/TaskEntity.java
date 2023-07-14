@@ -1,9 +1,7 @@
 package com.kartik.backend.tasks;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import com.kartik.backend.notes.NotesEntity;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -11,6 +9,8 @@ import lombok.Setter;
 
 
 import java.util.Date;
+import java.util.List;
+
 @NoArgsConstructor                       // this act as there is a constructor with no args in task entity
 @AllArgsConstructor                     // this act as there is a constructor with all args in task entity
 @Getter
@@ -26,7 +26,9 @@ public class TaskEntity {
     private String description;
     private Boolean completed;
     private Date dueDate;
-
+    @OneToMany(cascade = CascadeType.ALL, targetEntity = NotesEntity.class, mappedBy = "task")
+    private List<NotesEntity> notes;  // if we want that inside task array of notes should be present, then only we have to write this relationship.
+                                     // if we don't define this relationship then also the mapping table will create by Hibernate.
 }
 
 /*
@@ -39,4 +41,8 @@ public class TaskEntity {
 
    - here no-args constructor is useful because we create a task without id, we will create task obj then we will set the other fields by using setter. becoz when we save in db then db will
          generate the id for us.
+ */
+/*
+    If we want to define both the relationships in both the entities, then we can define otherwise we can define in one of the entity then also it will work.
+
  */

@@ -1,295 +1,278 @@
-# Spring Boot
-
-#### Why Should we not write code in Controller || what could be the responsibilities of Controller?
-```  
-    assume we build a server. think like a box is a server. 
-    all application have their own Backend Interface and Frontend Interface. 
-    
-                                Presentation Layer          Domain Layer                           Data Layer   
-                                -----------------------|--------------------------------------|-------------------------------------
-                                |                      |                                      /  Task SQL Repository               |
-          REST                  |                      |                                    / |                                    |
-                                |   Task Controller\   |                                  /   |                                    |
-                                |                   \  |                                /     |                                    |
-                                |                    \ |                              /       |                                    |
-                                |                     \                             /         |                                    |
-          GraphQL               |  Task GraphQL Cont.---           Task   Service./           |                                    |
-                                |                      /                           \          |                                   |
-                                |                     /                              \        |                                   |
-                                |                    / |                               \      |                                   |
-                                |                   /  |                                 \    |                                   |
-                                |                  /   |                                   \  |                                   |
-          HTML                  |   Task HTML Cont/    |                                      \   Task Redis Repository            |
-                                -----------------------|--------------------------------------|-------------------------------------
-                                |    Controllers                 Services                               Repositories               |
-                                                                                                  
-                                                                                                        
-   
-   - from almost 25 years, this general thing is going on that we are doing 3-Layer Split.
-        as project size increase then we split it into 5 layer split and then 7 layer split.... so on.  
-   - by 3-Layer Split, MVC is born.
-        1. Presentation Layer       (In Node js, it called as Route)
-        2. Business Layer || domain layer || service layer
-        3. Data Layer
-   - In Springboot project the terms that we used mostly 
-        1. Controller
-        2. Service
-        3. Repository
-   - our server might have multiple way which frontend interact. 
-         1. REST API       :-  
-         2. GraphQL API    :-
-         3. HTML Endpoint. :-  where browser can directly fetch data from server.
-         
-      Lets say, Task Manager application.       || different ways to create api's for Task Manager application.
-                we might have Task-REST-Controller, Task-GraphQL-Controller, Task-HTMller. three seprate controller which deal with tasks
-                = Task-REST-Controller:- here the logic is written that GET, PUT, POST (body in JSON), DELETE, PATCH, etc. req will happen then return the response as JSON body.
-                = Task-GraphQL-Controller:- here the Req & Response happen through POST method only. & response happen in GraphQL-Query Language. 
-                = Task-HTML-Controller:- here we have machanism that if browser send the req then we directly return the HTML page where all the task has return 
-                                                means server not send the JSON Data. 
-                we have to save data somewhere like in database or in file.        
-                    whenever we do save it. there could be certain common things:-
-                        1. Create a new task
-                        2. Add a new task
-                        3. Update a task
-                        4. Delete a particular task
-                    for these operation we can't depend upon weather the command came from REST or GraphQL or HTML. these things we need to do. 
-                Why should we implement the storing logic three times. How we can define one single place.
-logic Segregation   that's where the logic Segregation comes into picture. 
-                    means, we will create one Task Service in Domain Layer. so when somebody add new task via REST API that will call Task Service, 
-                            if somebody add new task via GraphQL API that will call Task Service, if somebody add new task via POST Req through HTML Endpoint that will call Task Service.
-                            but "The Service is where it define the steps will happpen".  
-                            after Service, we can save the data in service it is possible but it is not a good practice. like we are store in ArrayList but it store in RAM. 
-                            so we will save in database. so the code to interact with db where do we write. 
-                              suppose if we write in Service then,
-                                  Ques:- Will data be stored in same place ?
-                                  Ans :- like in SQL db, all task are saved. but people fetch mostly Top 10 task when app open then first GET Req would be to fetch Top 10 Task 
-                                            so we have cached that data using Redis.(if data exists in redis then we will fetch from redis else we will fetch from db)
-                                            if we do this then we have two datasource. one is db and another is redis. so we have to write code to interact with db and redis. 
-                                            both have different way to interact. so we have to write code for both. sometimes we store some part in SQL Db & some part in NoSQL Db.
-                                                like :- In Zomato app, the reviews are stored in Cassandra Db and other data is stored in SQL Db.    
-                              it could happen that, 
-                                  we split our backend code in such a way that multiple services which talk to seprate service where data is getting stored.
-                                    like Db-Service where task related data is stored. & we written Task Service that will not directly write SQL query means 
-                                    there is another REST API to fetch data like we have decentralised db where the Master DB is in centrally (one location) and Task related API is distributed 
-                                    depending on the country. in every country we setup a server. all the server have their own Redis Cache. but they don't have their own local db.
-                                    they are making remote call. & to make remote call they have to call another serivce. so the data layer could be talking to SQL DB, NoSQL DB. or talking to another service.
-                                  In Services What Happen 
-                                    Backend & Frontend are relative task, means clients talk to service1 & service1 talk to service2 & service2 stores data in db.
-                                        so for service1 Frontend is client & service2 is backend. 
-                                        but for service2 service1 is frontend & db is backend.   
-                                    For every layer we can have Frontend & Backend. 
-                                        it does not means that Frontend is always a browser. or Backend is always a db.
-                    so, we create two data source in data layer.
-                      Task Service will talk to Task SQL Repository & Task Redis Repository. 
-                        first it will make req to Task Redis Repo to check if data exists in redis or not. if exists then return the data else make req to Task SQL Repo to fetch data from db.
-                        while doing this sepration then we have to keep in mind that what kind of error do we have to handle on which place.
-                        Ques:- Which Layer will handle which error see with Example?
-                        Ans:- 
-                            Error 1:- creating a task the status will capture Boolean value but we are sending String value. 
-                            Ques:- In which layer we will handle Error 1?
-                            Ans :- Presentation Layer. means at the controller. 
-                                    becoz the serialization & deserialization happen at the controller level. like if someone wants to create a task 
-                                     & they send the info about the task which they want to create. like completed fields. that happens in controller level.
-                                     SpringBoot handels Serialization & D  eserialization automatically using Jackson Library. so when the deserialization happen at that layer itself we need to 
-                                     handle the error. like we are expecting Boolean value but we are getting String value.
-                            
-                            Error 2:- in Service of Task Manager if we want to add task the due date after has to be today. can't be before the current date.
-                            Ques:- In which layer we will handle Error 2?
-                            Ans :- Business Layer, this is part of business logic. so we will handle in Service Layer. 
-                                     Why this is Business Logic ?
-                                        becoz, this is part of my project that due date should be after today date. suppose other might be like they create task of past date.
-                                        my task manager logic says that such things not allowed.
-                            
-                            Error 3:- task with given id does not exist.
-                            Ques:- In which layer we will handle Error 3?
-                            Ans :- Data Layer
-                           
-                            Conclusion:-
-                                    Controller is all about the presentation layer.
-                                     like the req is coming. here we check like format is correct or not.
-                                            if its contain API key or not. 
-                                     but not to enforce any logic on it. like we are not checking that due date should be after today date or not. it will handle by service layer. 
-                                    If there is problem related to how to store data. 
-                                        like I want to store Notes inside task & suppose Notes contain Wrong Task Id. 
-                                        then we will handle this error in Data Layer. 
-                    Case Study:-
-                        Assume Task Id does not exit happen in data layer.
-                          then we get error like in java we get SQLException. 
-                        Will we send te SQLException to end user ?
-                            No, why user should know the internal things so we have to format it "Task not found" with status code 404. to presentation layer.
-                        all these layers among them they would technically API only.
-                            but internally these are function 
-                            assume Service Layer & Controller Layer have contract like Controller say this this thing i will ask you to do. 
-                            Service Layer say i will do this this & respond to you. 
-                           means, while desgin Software we should not only desgin correct usecases. like what format service send data to controller. 
-                                    but also we have to desgin incorrect usecases. like what format error would be read by controller from service layer.   
-
-   API Gateway:-
-                 In Front of my Application (Backend Application) || Server there is an API Gateway, it will act as load balancer. 
-                 like multiple requests coming from diff apps. assume if an api request comes that not contain api key then it will reject it before calling the app logic\
-                      that is the job of API Gateway.
-                 we can put this logic in our app also but if we have multiple backend like microservices then we have to write this logic in every service.
-                    so we can write this logic in API Gateway.
-                 more things it will do.
-   Logging:-
-            which layer we implements Logs generally ?
-                we have to implement logs in every layer. becoz we want to know what happen with our request in every layer.
-                    like Request Body logging at controller layer.
-                         Command logging at service layer.
-                         SQL Logging at data layer.
-                Means, Logging is not layer specific.
-                we have to desgin traceability of logs. 
-                    like on AWS, there is Xray service. 
-                      every req has request ID. that gets passed on to the service command then that gets passed to the sql command. 
-                      so we can trace the log like this error is generated becoz of this request that came from the controller
-            
-            How to make universally traceable logs across a system.
-                if we use UUI then no two req will have same id once the id attached then the id will carry through the req 
-                sometimes the Req come to API Gateway might lead two diff operation. may be one task is Synchronous like to create a task so we have to send to db 
-                & send back the response that task is created. another operation also happen like a user how many task create daily kind of thing. user does not know 
-                it happen in background. 
-                "We will attach the req id to both the operation means both the operation contain same req id"
-                In future if we trace bug then based on req id we can trace that what user did becoz of which bug is generated. 
-                    if we generate the req id from client level then it's very good so that we can trace it easily but if we generate
-                    req id from API Gateway then we can also trace it.
-   Add Dependencies in build.gradle :-
-                      if we want to use JPA then we have to add dependency in build.gradle
-                      like:-
-                        implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-   Application.properties:-
-                     - here we write certain configuration for our project. 
-                     - Prefered way to write configuration is in application.yaml file.
-                     - both properties & yml file are Markup Language. both are serve same thing. but syntax is different. 
-                       Example:- 
-                            Application.properties:- 
-                                server.port=8081
-                                server.address=localhost
-                                spring.datasource.url=jdbc:mysql://localhost:3306/task_manager
-                                spring.datasource.username=root
-                                spring.datasource.password=root
-                            
-                            Application.yaml:- here, server. in every line is not needed. files become more readable.
-                                server:
-                                    port: 8081
-                                    address: localhost
-                                spring:
-                                    datasource:
-                                        url: jdbc:mysql://localhost:3306/task_manager
-                                        username: root
-                                        password: root
-   Package by Layer || Feature :-
-                                Package by Layer means "Old Software does this"
-                                 - we create package by layer like controller, service, data.
-                                   Example:- 
-                                        com.example.taskmanager.controller
-                                        com.example.taskmanager.service
-                                        com.example.taskmanager.data
-                                Package by Feature means "Modern Software does this becoz it's easier to split things into services || microservices"
-                                 - we create package by feature like task, user, note.
-                                   Example:-
-                                         com.example.taskmanager.task
-                                             TaskController.java
-                                             TaskService.java
-                                             TaskRepository.java
-                                         com.example.taskmanager.user
-                                             UserController.java
-                                             UserService.java
-                                             UserRepository.java
-                                         com.example.taskmanager.note
-                                             NoteController.java
-                                             NoteService.java
-                                             NoteRepository.java
-   Lombok:- 
-            if we use annotation like @Getter, @NoArgsConstructor, @AllArgsConstructor, 
-            then we don't have to code for those things. lombok will generate code for us.
-            "At Compilation time it will generate these methods into my class"
-            becoz writing these things we called as boilerplate code.
-            Lombok is a Compile Time library that helps us to reduce boilerplate code.
-            also a Development tool.
-            
-            those annotation are Source level annotation. means, they are not available at runtime.
-   Approach:- to write code.        
-            Bottom to Top:- (if we know how we store data. hence Repository layer look like, hence service layer look like, hence controller layer look like)
-                    - first we write data layer then service layer then controller layer.
-                        
-            Top to Bottom:- We start from Requirements side. (like my api suppose to look, hence the logic i need to write, hence this is how i store data)
-                    - first we write controller layer then service layer then data layer.
-   Autowiring:- 
-               Means we don't have to create object of class. spring will create object for us.
-                How interanlly Happened ?
-                    - spring will create object of class & store it in container.
-                    - when we need that object then spring will give us that object from container.
-                    - spring will create object of class by calling default constructor.
-                    - if we want to create object of class by calling parameterized constructor then we have to use @Autowired annotation.
-                      autowired annotation will tell spring to create object of class by calling parameterized constructor.
-                        Example:-
-                                @Autowired
-                                private TaskService taskService;
-                                
-                                public TaskController(TaskService taskService) {
-                                    this.taskService = taskService;
-                              }
-   Test:-
-              if we want to test the code that we have written in Service layer then we have to write Controller layer also.
-                so that we can make API call & test the code.
-              but if we don't want to write Controller layer then we can write Unit Test. 
-   JPATest V/s Web Test :-
-                JPA Test:-
-                            - JPATest will create a DB layer & test. 
-                            - JPA Test will not start the server.
-                            - JPA Test will not hit the API.
-                Web Test:-
-                            - Web Test will start the server. & test.
-                SpringBootTest:-
-                            - SpringBootTest will start the server. & test.
-                            - it will take more time to test.
-                            - it will test the whole application.
-                                    
-                        
-    
-        
-        
-        
-        
-        
-        
-        
-        
-```
-### Serialization & Deserialization
+### SpringBoot
+## Dependency Injection
 ``` 
-             means, we serialize an object to send over network to store in file.
-                 like:- what can we store in file & what can we send over the network.
-                        Bytes, we can store in file & send over the network.
-                        But when we are working with Java or any other language then we are working with Objects not with Bytes.
-                             lets we create Person class in Java or any other language. these language have their own way to memory management.
-                             like Java Has JVM(Heap Based Memory Management) & C++ will create Pointer Based Native Memory Management.
-                                   all language they way they represents this person is all differnet 
-                                   means, in JVM how java stores a Person if we try to take raw bytes out of JVM & give it to JS, Python ... so on. 
-                                      they will not understand. becoz java has own way to storing. 
-                                 Real World:-
-                                        assume we have to program one is Java(Backend) & another inm Python(Frontend). they both read & write the same file. or they talk with each other via network. 
-                                        so the data  that need to be store, need to be transfered.
-                                        then we come up with Data Representation Mechanism. like JSON, XML, YAML, etc. 
-                                        they are more language independent. like JSON can be read by Java, Python, JS or human. 
-                                        so "the process of when Java progrma wants to send JSON data they have to take Java object & turn into JSON String which can send as bytes somewhere & if they get back 
-                                            some JSON  String as bytes then we converted back into Java Object."
-                "The Process of Turning Programmin Language level Memory into transferable or storable bytes is called Serialization."
-                  the opposite process of Serialization is Deserialization.
 
-```
-### Think like Backend Engineer
-```  
-    if we learn anything NodeJS, Golang ... so on. concepts how we will build server || backend are all same.
-    may be some other framework call the presentation layer with other name called Route in NodeJS.
-    like in many language the concept of class is not exist. like JS. But OOPs concept is exist in JS.
-         object can be created directly, prototype existis. 
-    like some language call the function as method || procedure but this will not change the concept of function.
-        we call the function & give some input if required & get some output.
-```
-### **When we build Backend, Service we split into 3 parts.**
-1. one which will deal with Presentation which is other services that call my service it handles that means reply to that. 
-2. there is a part that handles how we store the data. it is called as Data Layer.
-3. In between we write our logic 
+    - Think of Dependency Injection as a Design Pattern. don't think of it as a Feture of SpringBoot.
+        suppose we build a simple project there we just write Class & Constructor  
+                Class Person {
+                    int age;
+                    String name;
+                    Person(int age, String name){
+                        this.age = age;
+                        this.name = name;
+                    }
+                }
+                    Person p = new Person(20, "Rahul");
+              from the above code we have another situation like we have PersonBuilder & from PersonBuilder we can create a Person Classes.
+              Ques:- In what situation we have to create PersonBuilder class ?
+              Ans :- we are creating PersonBuilder, we have to create 10 Person of same age but different name.
+                     we can do like this:-
+                        PersonBuilder pb = new PersonBuilder();
+                        pb.setAge(20);   
+                        setName("Rahul").build();    //not sure about this syntax
+                        
+                        assume, instead of 2 args there is 10 args & from that 8 args are same for 10 person. 
+                               now the code will be very less
+                                  Code;
+                        this is the advantages.
+                        so, we can create PersonBuilder class.
+                     now, we have created two classes Student & Teacher. that inherits Person class.
+                          then we create PersonFactory class.  
+                            PersonFactory has some static methods like createStudent(), createTeacher() ... so on.
+                            those methods are creating Student & Teacher objects.
+              Ques:- Why do we create PersonFactory class ?      
+              Ans :- To avoid Tight Coupling 
+              Builder:- (we have lots of attribute & most of are templated & some of them are change) (validation) (checking Duplication)    
+              Factory:- (createCollegePerson is a Factory method here we check if age > 25 then it will create Teacher object else Student object)
+                         means like which kind of object we want to create that will be decided by Factory method. 
+                                "Which type of Object that dependent on runtime", based on runtime we can create object. 
+                         like sometime we need to create Student object & sometime we need to create Teacher object. that's why we used Factory method here.                            
+    - Dependency Graph:-
+                  Example:-
+                            we want to build Vehicle class. 
+                            Vehicle class needs Engine, body, wheel. 
+                            wheels class needs Tyre, hub, tube.
+                            Engine class needs IC engine needs fuelTank, Electrical engine needs battery.
+                            Body class needs seats... so on.
+                                
+                                                                           Vehicle
+                                                                              |
+                                               -------------------------------| -------------------------------------------
+                                               |                              |                                           |
+                                            Body                           Wheel                                        Engine
+                                               |                              |                                           |
+                                               |                              |                                           |        
+                                                               ------------------------------             -------------------------------
+                                                               |             |              |             |                             |
+                                                               hub           tyre           tube         IC                            Electrical
+                                                                                                          |                             |
+                                                                                                       fuelTank, CC                     Battery, KiloWatt.
+                                                                                                         
+                                                                                                         
+                                    Class Vehicle {                                             Class Wheel {                                         Class Engine {            
+                                        Engine engine;                                           Tyre;                                                   horcePower;;                         
+                                        Body body;                                               Hub;                                                     torque;       
+                                        Wheel wheel;                                             Tube;                                                  }
+                                        Vehicle(Engine engine, Body body, Wheel wheel){          Wheel(Tyre tyre, Hub hub, Tube tube){
+                                            this.engine = engine;                                   this.tyre = tyre;
+                                            this.body = body;                                       this.hub = hub;                                
+                                            this.wheel = wheel;                                     this.tube = tube;
+                                        }                                                         }
+                                    }                                                           }      
+                     
+                     we want to create a new vechicle. so we need to create wheel & engine. 
+                     Ques:- Where we will create wheel & engine ?
+                     Ans :-  inside the public Vehcile() constructor.
+                              like:-
+                                    public Vehicle(){
+                                       Wheel wheel = new Wheel();
+                                       Engine engine = new Engine();
+                                    }
+                             then inside Wheel we need hub, tyre, tube. & inside Engine we need fuelTank, CC.
+                               somewhere has the logic which descide weather we will use tube in the tyre or not.
+                     Ques:- How we will descide that ?  becoz some vehicle has tubeless tyre & some vehicle has not.
+                            What type of Tyres we are using. either when constructing the vehicle does user have to pass some arg to vehicle 
+                             & then that arg will be passed to wheel constructor.
+                             inside Wheel Constructor we will descide that tyre will be tubeless or not.  
+                     Ques:- if we creating new vehicle then we have parameter type like IC || EV. so when we create new vehicle then we add Vehicle Type.
+                            based on that it will call constructor of IC engine or Electrical engine. || it might call EngineFactory class. (EngineFactory will decide which type of engine we need to create based on Vehicle Type)
+                             
+                  Summary:-
+                        When we create a vehicle we need to pass lots of args inside Vehicle constructor.
+                        based on that lots of code will be written in Vehicle Constructor. also in Wheel Constructor. & also in Engine Constructor.
+                       this can be reduced. 
+                           In Vehicle Class, instead of calling Engine like Engine engine = new Engine(); we use another approach.
+                               Old Approach:-
+                                  Public Class Vehicle{
+                                   Engine engine;
+                                   public Vehicle(){
+                                       Engine engine = new Engine();
+                                    } 
+                                 } 
+                               New Approach:- 
+                                   Interface Vehicle{
+                                     @Inject
+                                     Engine engine;
+                                      
+                                     } 
+                                      
+                               How this will Inject ?
+                                  here the Dependency Injection framework comes into the picture.
+                                    1. Juice
+                                    2. Dagger
+                                    3. Spring
+                                      ... so on. they are the Dependency Injection framework. which used to Inject the dependency.
+                                        we will use Spring becoz its also an Dependency Injection framework.
+                                  
+                                  I have Engine Class. from which I extends IC engine & Electrical engine.
+                                    like this:-
+                                                                        Interface Engine {
+                                                                            int horsePower;
+                                                                            int torque;
+                                                                        }
+                                                  @EV                                          @IC                        
+                                      Class EVEngine extends Engine{                        Class ICEngine extends Engine{
+                                            int battery;                                         int fuelTank;
+                                            int kiloWatt;                                        int CC;
+                                         }                                                      }
+                                         
+                                       I created a custom annotation which has some scope. like @ICEngine & @EVEngine.
+                                         now, in Vehicle instead of creating directly Engine engine = new Engine();
+                                              I am creating Vehicle as Interface. & then create two classes like ICEngineVehicle & EVEngineVehicle.                            
+                                                 like:-
+                                                                                       Interface Vehicle{
+                                                                                           @Inject
+                                                                                           Engine engine;
+                                                                                       }
+                                                                   @IC                                      @EV 
+                                                             ICVEhicle extends Vehicle{                 EVVehicle extends Vehicle{
+                                                               
+                                                                 ICEngine ICengine;                           EVEngine EVengine;
+                                                             }                                            }
+                                                      Now, we construct the object of ICVEhicle.
+                                                          the Dependency Injection framework will see "To construct an object of ICVEhicle class we need an Engine".
+                                                          but, Where DI can get the Engine ?
+                                                                  Engine is an Interface 
+                                                                  so we get the Engine from the class which implements Engine Interface.
+                                                                    like ICVEhicle class implements Engine Interface. || EVVehicle class implements Engine Interface.
+                                                          How DI will indentify that which vehicle class get engine from which implementing engine class ?
+                                                            Then DI notice that ICVEhicle class has @IC annotation & EVVehicle class has @EV annotation.
+                                                                so, DI will see engine class which has @IC annotation rather than @EV annotation.
+                                                                    so, DI will create an object of ICEngine class & then it will inject that object into ICVEhicle class.
+                                                      "DI will automatically mapped whenever we try to create an object of ICVEhicle class then it will pic engine from ICEngine class & inject that object into ICVEhicle class."
+                                                       & "DI will automatically mapped whenever we try to create an object of EVVehicle class then it will pic engine from EVEngine class & inject that object into EVVehicle class."
+                                                       
+                                                      Becoz we need to Inject Engine into Vehicle class. & there is only two places where Engine object is created.
+                                                         then DI has to identify that which vehicle class get engine from which implementing engine class.
+                                                      How it will Pic ?
+                                                         DI will see that parent object has (ICVEhicle class) @IC annotation so DI will pic child object (ICEngine class) which has @IC annotation.
+                                                      
+                                                      These are the @Qualifier annotation. which used to identify that which class get object from which class. 
+                                                 Benefits :-
+                                                            In the Constructor of EVVehicle class we don't have to write a code 
+                                                                like If Vehicle type is IC then EngineFactory.createICEngine() else EngineFactory.createEVEngine().                   
+                                                            so the kind of things that Builder & Factory Patter has solve. DI also trying to solve similar things.
+                                                       In Oop's DI is also a desgin pattern.       
+                                                       
+                  Ques:- Where would we use something like DI rather than using Builder or Factory Pattern ?  
+                  Ans :-  when we need to build certain object. 
+                            like:- 
+                                                                Obj1
+                                                                  |
+                                                                  |
+                                                  ----------------|--------------------------
+                                                  |               |                         |
+                                                Obj2            Obj3                        Obj4
+                                                 |                |                         |    
+                                                 |                |                         |
+                                            -----|------    ------|------             ------|---------
+                                            |           |    |           |             |               | 
+                                           Obj5        Obj6 Obj7        Obj8          Obj9            Obj10          
+                            
+                            creating these kind of object we have to think into Two ways.
+                                1. Top Down Approach
+                                      Step 1:- I have to create obj 1
+                                      Step 2:- I have to create obj 2 
+                                      Step 3:- I have to create obj 3
+                                      Step 4:- I have to create obj 4
+                                      Step 5:- I have to create obj 5  ... so on.
+                                               then i have to also see "To Construct these objects basically Obj 3 & Obj 4 are not step 3 & step 4."    
+                                                we have to build Obj 5 & Obj 6 in step 3 & step 4.  then we can move to create Obj 3 as step 5 & so on.        (DFS Approach)  
+                                      Step 1:- I have to create obj 1
+                                      Step 2:- I have to create obj 2
+                                      Step 3:- I have to create obj 5
+                                      Step 4:- I have to create obj 6
+                                      Step 5:- I have to create obj 3
+                                      Step 6:- I have to create obj 7
+                                      Step 7:- I have to create obj 8   ... so on.  
+                                                this is how i can create these kind of object. 
+                                                    ![img.png](img.png)                                                                           
+                                
+                                2. Bottom Up Approach  
+                                        In this, we create some logic by writing some function || class which has some static methods, to generate these kind of object.
+                                            like:-
+                                                  there is an way to which we can create Obj 5, Obj 6, Obj 7, Obj 8, Obj 9, Obj 10, Obj 2, Obj 3, Obj 4.
+                                                    suppose we have to build the Obj 2. then we know that to build Obj 2 we need Obj 5 & Obj 6.
+                                                             & the Obj 5 & Obj 6 are already available. 
+                                                             so, I don't have to build in the Constructor of Obj 2 by calling Obj 5 & Obj 6 Constructor.    
+                                                                   becoz there is an mechanism to build Obj 5 & Obj 6.
+                                                                    Mechanism like:1
+                                                                        Approach 1:- it is Memory Intensive & Bad for Memory
+                                                                                       - we create all objects that exist in my code. so I create them & store them in the memory.
+                                                                                           then whenever I need them I just pick them from the memory.
+                                                                                           
+                                                                        Approach 2:- In the Project, somewhere we write the logic that "How we can generate any obj of any type" 
+                                                                                        then whenever we building an obj.
+                                                                                            to build the Obj 2, we need Obj 5 & Obj 6. 
+                                                                                        How we will get those Obj. that code is also written (how to generate obj)
+                                                                                        How the Objects Created ?
+                                                                                              (there is a place in my project where Generating Objects logic has written)
+                                                                                                In DI frameworks we don't have to define manually as long as Objects can be created using default variable ... etc.
+                                                                                                    DI frameworks genrate code generation logic also.
+                                                                                            so, we have defined the way to create all objects in the code. 
+                                                                                     Whenever we want to create Object for Vehicle, to create we need Wheels & Engine. <==  just need to tell the DI framework & done.  
+                                                                                       means we have seprated the dependencies from the Process of creation.
+                                                                                            1. One Part is how the object is created. like How the Vehicle is created, Engine is created, Wheels is created.
+                                                                                       we just need to tell "Which things are needed in Which things".                                  *******************************************************************
+                                                                                        so the constructor code is not getting large. 
+                                                                                       Example:- What we have done it ?
+                                                                                                    The process of actual cooking & the Recipe are seprated. 
+                                                                                                    
+                                                                                       If there is an Class, creating object for those class is more complex. we can write our own Class Generating logic somewhere in the code to create those objects.
+                                                                                     we are just seprating the creation of Dependency Tree from the actual process of creating the object(putting so much logic in the constructor).     
+                                                                                     
+    DI framework is creating those repository object & injecting it in TaskService class. then creating TaskService object & injecting it in TaskController class.
+        then creating the TaskController object, for us. 
+        
+        Reason DI framework generating the Service Class Ojbect automatically becoaz we use @Service annotation in the Service Class.
+        Reason DI framework generating the Repository Class Ojbect automatically becoaz we use @Repository annotation in the Repository Class.
+        Reason DI framework generating the Controller Class Ojbect automatically becoaz we use @Controller annotation in the Controller Class.
+        ... so on. 
+        if we not annotated the class with @Service, @Repository, @Controller then DI framework will not generate the object for those class.
+    @Bean       (means we are defing the code generation logic (to create obj) for that class )
+         - if we annotate the method with @Bean then DI framework will try to create the object with the default values. otherwise it won't.  
+         - DI framework won't create any variable wherever we have asked inside the constructor, unless we specify with the @Bean annotation.
+         - A simple class with default value inside it. & we want to initialize the object of that class with the default value. then we have to set it as @Bean.
+             like:-
+                    public class MyBean {
+                        private String property1;
+                        private String property2;
+                     }
+                     this below Bean method i can create anywhere in the code.
+                        @Configuration
+                        public class MyConfiguration {
+                            @Bean
+                            public MyBean myBean() {
+                                MyBean bean = new MyBean();
+                                // Set default values for the bean properties
+                                bean.setProperty1("default1");
+                                bean.setProperty2("default2");
+                                return bean;
+                            }
+                        }
 
-### When we make projects always remember **What is the responsibility of that layer** means we should not make a layer that takes care of errors || logic which is not supposed to be in that layer. 
+                       so whenever we want to create the object of MyBean class then spring will create the object with the default value.
+                         These default values will be used by the DI framework unless overridden by explicit configuration elsewhere.  
+                        It's important to note that the @Bean annotation doesn't guarantee that the DI framework will use default values.
+                        The actual values used to configure the bean can vary depending on the configuration of the DI framework and the specific implementation of the method annotated with @Bean.
+                        If you want to provide default values for the bean configuration, you can specify them within the method annotated with @Bean.
+                                                                             
+                                                                                     
+                                                                                     
+                                                                                     
+                                                                                     
+                                                                                     
+                                                                                     
+                                                                                     
+                                                                                     
+```
