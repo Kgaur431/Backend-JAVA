@@ -3,6 +3,8 @@ package com.kartik.backend.tasks;
 import com.kartik.backend.beans.TestBean;
 import com.kartik.backend.tasks.dtos.CreateTaskDto;
 import com.kartik.backend.tasks.dtos.TaskResponseDto;
+import com.kartik.backend.tasks.exceptions.DueDateException;
+import com.kartik.backend.tasks.exceptions.TaskNotFoundException;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
@@ -29,6 +31,9 @@ public class TaskService {
 
  */
     public TaskResponseDto createTask(CreateTaskDto createTaskDto) {
+        if (createTaskDto.getDueDate().before(new Date())) {
+            throw new DueDateException("Due date cannot be in the past");
+        }
         TaskEntity task = modelMapper.map(createTaskDto, TaskEntity.class);
         task.setCompleted(false);  // By default, a task is not completed.
         TaskEntity tasks = taskRepository.save(task);
@@ -38,6 +43,16 @@ public class TaskService {
     public String getTestBeanName() {
         return testBean.getName();
     }
+
+    public TaskResponseDto getTask(Long id){
+        TaskEntity task = taskRepository.findById(id).orElseThrow(() -> new TaskNotFoundException(id));
+        return modelMapper.map(task, TaskResponseDto.class);
+    }
+
+
+
+
+
 
 }
 

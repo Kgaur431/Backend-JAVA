@@ -70,3 +70,7 @@
         so for that we will create a Bean for ModalMapper in the Main Class.
             then spring will create a ModalMapper object & inject it where ever we want.
 ```
+### [Exception Handler at Project Level ](https://www.baeldung.com/exception-handling-for-rest-with-spring)
+
+### Best Practices
+1. we have to handle error as earlier as possible like we should handle error in controller class.

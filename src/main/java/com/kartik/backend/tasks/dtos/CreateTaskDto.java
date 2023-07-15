@@ -30,5 +30,6 @@ public class CreateTaskDto {
         -  Data annotation is used to validate the data that is coming from the client side.
         -  with this annotation we can generate getters and setters, constructors, toString() method ... etc.
 
+    - if we use @NonNull annotation in dto class, then spring will generate validation for that field on incoming request JSON object.
 
  */
