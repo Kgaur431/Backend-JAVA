@@ -60,6 +60,22 @@
                    -  This library is used to convert one object to another object. 
                                                    CreateTaskDto to TaskEntity     
                    -  read more about TaskService.md file
+    Grouping Exception:-
+            @ExceptionHandler(value = {ExceptionA.class, ExceptionB.class})
+            ResponseEntity<ErrorDto> notFound(Exception ex, WebRequest request) {
+                return ResponseEntity.notFound().build();
+            } 
+            
+            @ExceptionHandler(value = {ExceptionC.class, ExceptionD.class})
+            ResponseEntity<ErrorDto> notFound(Exception ex, WebRequest request) {
+                return ResponseEntity.badRequest().body().build();
+            }  
+            
+                here we are grouping exception like 404 so that we group all 404 exception in one method.
+                same with if we have 400 exception then we group all 400 exception in one method.
+                    so don't need to write if else condition for each exception.
+                  
+           
                 
 ```
 #### Real Time Usecase of Using Bean, In which cases we have to use Bean.
@@ -73,4 +89,20 @@
 ### [Exception Handler at Project Level ](https://www.baeldung.com/exception-handling-for-rest-with-spring)
 
 ### Best Practices
-1. we have to handle error as earlier as possible like we should handle error in controller class.
+1. we have to handle error as early as possible as we should handle error in controller class.
+
+# Defensive Programming.
+## **Think like Real Software Engineers** || **Reality of Software Engineer While Writing a Code**
+``` 
+    -   always imagine when we write any line of code. the nearest abstract level. like why we are writing a code if its inside a function, if its inside a package, if its inside a class, if its inside a module, if its inside a particular class. 
+          imagine always weather or not may be the entire project we are alone writing, may the other team members are also writing that project together.
+          but imagine that the particular function || class in which i am writitng code "You are responsible for that function || class anything else is somebody else is writing".
+         
+         Means:- When we write the controller layer then we should think like that Service & Data-Layer written by other member, like if we write the service layer then we should think like that controller & data-layer written by other member. so on. 
+                 so by using this flow like at controller layer the HTTP Errors are getting handled. does not means that at data layer we don't need to handle the HTTP Errors.
+                  becoz tomorrow somebody else is creating GraphQL controllere where they forgot to handle the HTTP Error then GraphQL controller will also pass null value to data layer 
+                 Best Case is that data layer also checks for HTTP Error.
+                 So, the top layer checks for the HTTP Errors is happening or not, it does not matter becoz we also check for the HTTP Errors at data layer.   
+ 
+
+```
